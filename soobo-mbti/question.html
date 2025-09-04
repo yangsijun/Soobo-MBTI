@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수면 MBTI 테스트</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <main id="main">
+            <div id="progress">
+                <div id="progressBar"></div>
+            </div>
+    
+            <div id="qna">
+                <div id="question-num">Q1</div>
+                <img id="question-img" src="" alt="질문 이미지">
+                <h2 id="question">질문이 여기에 표시됩니다.</h2>
+                <div id="answer-box">
+                    </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+
+
+<script>
+    // --- 기능 구현 부분 ---
+    const main = document.getElementById('main');
+    const qna = document.getElementById('qna');
+    const progressBar = document.getElementById('progressBar');
+    const qNum = document.getElementById('question-num');
+    const qImg = document.getElementById('question-img');
+    const question = document.getElementById('question');
+    const answerBox = document.getElementById('answer-box');
+    
+    let currentQ = 0; // 현재 질문 번호
+    const userScores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 }; // 사용자 점수
+    let qnaList = []; // JSON 데이터를 저장할 빈 배열
+
+    // fetch를 사용해 JSON 파일 불러오기
+    function loadQnA() {
+        return fetch('./qna.json') // 1. JSON 파일 요청
+            .then(response => response.json()) // 2. 응답을 JSON으로 파싱
+            .then(data => {
+                qnaList = data; // 3. 파싱된 데이터를 qnaList에 저장
+            })
+            .catch(error => console.error('Error loading Q&A data:', error));
+    }
+
+    // 페이지 로드 시 애니메이션 효과
+    window.onload = () => {
+        main.style.opacity = 1;
+        main.style.transform = 'translateY(0)';
+        qna.style.display = 'block';
+        
+        loadQnA().then(() => { // JSON 로딩이 완료된 후 검사 시작
+            qna.style.display = 'block';
+            goNext(currentQ);
+        });
+    };
+
+    // 답변 버튼 클릭 시 호출될 함수
+    function selectAnswer(type) {
+        // 선택한 유형의 점수 올리기
+        type.forEach(t => userScores[t]++);
+
+        currentQ++; // 다음 질문으로
+        
+        if (currentQ === qnaList.length) {
+            // 모든 질문에 답했으면 결과 페이지로 이동
+            showResult();
+        } else {
+            goNext(currentQ);
+        }
+    }
+    
+    // 최종 결과 계산 및 페이지 이동
+    function showResult() {
+        let mbti = '';
+        mbti += userScores.E > userScores.I ? 'E' : 'I';
+        mbti += userScores.S > userScores.N ? 'S' : 'N';
+        mbti += userScores.T > userScores.F ? 'T' : 'F';
+        mbti += userScores.J > userScores.P ? 'J' : 'P';
+
+        // 결과 페이지로 mbti 값을 쿼리스트링으로 넘겨주며 이동
+        window.location.href = `result.html?mbti=${mbti}`;
+    }
+
+    // 다음 질문을 화면에 표시하는 함수
+    function goNext(qIdx) {
+        // 프로그레스 바 업데이트
+        const progress = ((qIdx + 1) / qnaList.length) * 100;
+        progressBar.style.width = progress + '%';
+
+        // 질문 내용 업데이트
+        qNum.textContent = `Q${qIdx + 1}`;
+        qImg.src = qnaList[qIdx].img;
+        question.textContent = qnaList[qIdx].q;
+        
+        // 기존 답변 버튼 제거
+        answerBox.innerHTML = ''; 
+
+        // 새로운 답변 버튼 생성
+        qnaList[qIdx].a.forEach(answerInfo => {
+            const btn = document.createElement('button');
+            btn.className = 'answer-btn';
+            btn.textContent = answerInfo.answer;
+            btn.onclick = () => selectAnswer(answerInfo.type); // 클릭 이벤트 연결
+            answerBox.appendChild(btn);
+        });
+    }
+</script>

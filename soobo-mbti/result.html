@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수면 MBTI 검사 결과</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <main id="main">
+            <h3 id="result-type">당신의 유형은...</h3>
+            <h1 id="result-name">결과 이름</h1>
+            <img id="result-img" src="" alt="결과 이미지">
+            <p id="result-desc">결과에 대한 설명이 여기에 표시됩니다.</p>
+            <button id="retry-btn" onclick="retryTest()">다시 테스트하기</button>
+        </main>
+    </div>
+
+    <script>
+        // --- 결과 데이터 ---
+        // 모든 16가지 유형에 대한 데이터를 준비합니다.
+        const resultList = {
+            'ISTJ': {
+                name: '청렴결백한 논리주의자',
+                img: 'https://i.imgur.com/gA5p6gH.png',
+                desc: '현실적이고 책임감이 강하며, 한 번 시작한 일은 끝까지 해내는 사람입니다. 규칙과 약속을 중요하게 생각하며, 신뢰를 줄 수 있는 사람입니다.'
+            },
+            'ISFJ': {
+                name: '용감한 수호자',
+                img: 'https://i.imgur.com/sQTbU6f.png',
+                desc: '차분하고 헌신적이며, 다른 사람을 돕는 것에서 보람을 느낍니다. 주변 사람들을 잘 챙기며, 안정감을 주는 따뜻한 마음의 소유자입니다.'
+            },
+            'INFJ': {
+                name: '선의의 옹호자',
+                img: 'https://i.imgur.com/uJ0T3Yc.png',
+                desc: '깊은 통찰력과 직관력을 가지고 있으며, 사람들에게 영감을 줍니다. 이상주의적이며, 더 나은 세상을 만드는 데 기여하고 싶어 합니다.'
+            },
+            'INTJ': {
+                name: '용의주도한 전략가',
+                img: 'https://i.imgur.com/eZ3PzCj.png',
+                desc: '논리적이고 독립적이며, 모든 일에 계획을 세우고 실행합니다. 지식을 탐구하는 것을 즐기며, 복잡한 문제를 해결하는 데 능숙합니다.'
+            },
+            'ISTP': {
+                name: '만능 재주꾼',
+                img: 'https://i.imgur.com/hG9wMAl.png',
+                desc: '호기심이 많고 상황 판단이 빠르며, 도구와 기계를 다루는 데 뛰어난 재능을 보입니다. 위기 상황에서 뛰어난 문제 해결 능력을 발휘합니다.'
+            },
+            'ISFP': {
+                name: '호기심 많은 예술가',
+                img: 'https://i.imgur.com/7oK2w9Z.png',
+                desc: '겸손하고 따뜻한 마음을 가졌으며, 현재의 순간을 즐깁니다. 예술적인 감각이 뛰어나며, 자신만의 방식으로 세상을 아름답게 만듭니다.'
+            },
+            'INFP': {
+                name: '열정적인 중재자',
+                img: 'https://i.imgur.com/mQ8RpA8.png',
+                desc: '상냥하고 이타적이며, 자신의 가치관과 신념을 중요하게 생각합니다. 다른 사람의 감정에 깊이 공감하며, 낭만적인 이상을 꿈꿉니다.'
+            },
+            'INTP': {
+                name: '논리적인 사색가',
+                img: 'https://i.imgur.com/c4Y1tA5.png',
+                desc: '지적 호기심이 왕성하며, 논리적 분석과 아이디어 탐구를 즐깁니다. 조용하고 과묵하지만, 관심 있는 분야에 대해서는 열정적으로 이야기합니다.'
+            },
+            'ESTP': {
+                name: '모험을 즐기는 사업가',
+                img: 'https://i.imgur.com/qEa7g1p.png',
+                desc: '에너지가 넘치고 사교적이며, 스릴을 즐깁니다. 명석한 두뇌와 뛰어난 관찰력으로 주변 상황을 빠르게 파악하고 행동으로 옮깁니다.'
+            },
+            'ESFP': {
+                name: '자유로운 영혼의 연예인',
+                img: 'https://i.imgur.com/hG9wMAl.png',
+                desc: '사람들의 주목을 받는 것을 즐기는 타고난 스타입니다. 사교성이 풍부하고 유머 감각이 뛰어나며, 주변 사람들을 항상 즐겁게 만듭니다.'
+            },
+            'ENFP': {
+                name: '재기발랄한 활동가',
+                img: 'https://i.imgur.com/uJ0T3Yc.png',
+                desc: '상상력이 풍부하고 열정적이며, 사람들과 어울리는 것을 좋아합니다. 긍정적인 에너지로 주변에 활기를 불어넣는 분위기 메이커입니다.'
+            },
+            'ENTP': {
+                name: '뜨거운 논쟁을 즐기는 변론가',
+                img: 'https://i.imgur.com/eZ3PzCj.png',
+                desc: '지적인 도전을 즐기며, 기존의 방식에 의문을 제기하고 새로운 가능성을 탐색합니다. 재치 있고 빠른 두뇌 회전으로 논쟁에서 지는 법이 없습니다.'
+            },
+            'ESTJ': {
+                name: '엄격한 관리자',
+                img: 'https://i.imgur.com/sQTbU6f.png',
+                desc: '체계적이고 현실 감각이 뛰어나며, 조직을 이끄는 데 능숙합니다. 사실에 근거하여 결정을 내리며, 정직하고 헌신적인 리더입니다.'
+            },
+            'ESFJ': {
+                name: '사교적인 외교관',
+                img: 'https://i.imgur.com/gA5p6gH.png',
+                desc: '주변 사람들에게 관심이 많고, 다른 사람을 돕는 것을 좋아합니다. 사회성이 뛰어나며, 조화로운 인간관계를 중요하게 생각합니다.'
+            },
+            'ENFJ': {
+                name: '정의로운 사회운동가',
+                img: 'https://i.imgur.com/mQ8RpA8.png',
+                desc: '넘치는 카리스마와 열정으로 사람들을 이끄는 리더입니다. 다른 사람의 성장을 돕고, 세상에 긍정적인 영향을 미치고 싶어 합니다.'
+            },
+            'ENTJ': {
+                name: '대담한 통솔자',
+                img: 'https://i.imgur.com/c4Y1tA5.png',
+                desc: '타고난 리더십과 자신감으로 목표를 향해 나아갑니다. 도전을 두려워하지 않으며, 장기적인 계획을 세우고 실행하는 데 뛰어난 능력을 보입니다.'
+            }
+        };
+
+        // --- 기능 구현 부분 ---
+
+        // 페이지가 로드될 때 실행되는 함수
+        window.onload = function() {
+            // URL에서 'mbti' 쿼리 파라미터 값 가져오기
+            const urlParams = new URLSearchParams(window.location.search);
+            const mbtiResult = urlParams.get('mbti');
+
+            if (mbtiResult && resultList[mbtiResult]) {
+                const resultData = resultList[mbtiResult];
+                
+                // HTML 요소에 결과 데이터 채우기
+                document.getElementById('result-type').textContent = `당신의 유형은 ${mbtiResult}`;
+                document.getElementById('result-name').textContent = resultData.name;
+                document.getElementById('result-img').src = resultData.img;
+                document.getElementById('result-img').alt = resultData.name;
+                document.getElementById('result-desc').textContent = resultData.desc;
+            } else {
+                // 유효하지 않은 mbti 값일 경우 기본 메시지 표시
+                document.getElementById('result-name').textContent = '결과를 찾을 수 없습니다.';
+                document.getElementById('result-desc').textContent = '테스트를 다시 시작해주세요.';
+            }
+        };
+
+        // '다시 검사하기' 버튼 클릭 시 index.html로 이동
+        function retryTest() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

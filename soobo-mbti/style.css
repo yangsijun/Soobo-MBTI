@@ -1,0 +1,284 @@
+body {
+    background-color: #f0f0f0; /* 연한 회색 배경 */
+    margin: 0;
+    font-family: sans-serif;
+}
+
+/* 공유 바텀 시트 오버레이 */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+}
+
+/* 바텀 시트 컨테이너 */
+.bottom-sheet {
+    position: fixed;
+    left: 50%;
+    bottom: -100%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 500px;
+    background: #fff;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.15);
+    padding: 12px 16px 20px;
+    transition: bottom 0.28s ease-out;
+    z-index: 1000;
+}
+
+.bottom-sheet.active {
+    bottom: 0;
+}
+
+.sheet-handle {
+    width: 44px;
+    height: 5px;
+    background: #e0e0e0;
+    border-radius: 999px;
+    margin: 6px auto 10px;
+}
+
+.sheet-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.share-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.share-item {
+    border: 1px solid #e5e7eb;
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 10px 8px;
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.share-item:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.sheet-cancel {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: #111827;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* 모바일 화면처럼 보일 메인 컨테이너 스타일 */
+.mobile-container {
+    /* 💡 핵심 속성: 최대 너비를 스마트폰 가로 크기와 유사하게 설정 */
+    width: 100%;
+    max-width: 500px; 
+    
+    /* 💡 핵심 속성: 컨테이너를 화면 중앙에 오도록 정렬 */
+    margin: 0 auto; 
+    
+    /* --- 추가적인 디자인 속성 (선택 사항) --- */
+    background-color: #ffffff; /* 흰색 배경 */
+    min-height: 100vh; /* 최소 높이를 화면 전체 높이로 설정 */
+    padding: 20px; /* 내부 여백 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+    box-sizing: border-box; /* 패딩과 테두리를 너비에 포함 */
+}
+
+/* 기본 스타일 초기화 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+body {
+    background-color: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#main {
+    width: 90%;
+    max-width: 500px;
+    background-color: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin: 0 auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* 프로그레스 바 스타일 */
+#progress {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+#progressBar {
+    width: 0%;
+    height: 20px;
+    background-color: #42a5f5;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+/* 질문 섹션 스타일 */
+#qna {
+    display: none; /* JS로 보이게 처리 */
+}
+
+#question-num {
+    background-color: #42a5f5;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    display: inline-block;
+    font-size: 1.2em;
+}
+
+#question-img {
+    width: 100%;
+    max-height: 250px;
+    object-fit: cover;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+#question {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-bottom: 20px;
+    word-break: keep-all; /* 단어 단위로 줄바꿈 */
+}
+
+/* 답변 버튼 스타일 */
+.answer-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 2px solid #e0e0e0;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    word-break: keep-all;
+}
+
+.answer-btn:hover {
+    background-color: #e3f2fd;
+    border-color: #42a5f5;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+body {
+    background-color: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+#main {
+    width: 90%;
+    max-width: 500px;
+    background-color: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 4px S20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    /* 애니메이션 효과 */
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeIn 0.8s forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 결과 제목 스타일 */
+#result-type {
+    font-size: 1.2em;
+    color: #555;
+}
+
+#result-name {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #1e88e5;
+    margin: 10px 0;
+}
+
+#result-img {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    border-radius: 15px;
+    margin: 20px 0;
+}
+
+#result-desc {
+    font-size: 1.1em;
+    color: #333;
+    line-height: 1.7;
+    text-align: left;
+    margin-bottom: 25px;
+    word-break: keep-all;
+}
+
+/* 다시하기 버튼 스타일 */
+#retry-btn {
+    display: inline-block;
+    width: 100%;
+    padding: 15px 20px;
+    background-color: #42a5f5;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#retry-btn:hover {
+    background-color: #1e88e5;
+}

@@ -7,20 +7,18 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="mobile-container">
-        <main id="main">
-            <div id="progress">
-                <div id="progressBar"></div>
-            </div>
-    
-            <div id="qna">
-                <div id="question-num">Q1</div>
-                <img id="question-img" src="" alt="질문 이미지">
-                <h2 id="question">질문이 여기에 표시됩니다.</h2>
-                <div id="answer-box">
-                    </div>
-            </div>
-        </main>
+    <div id="main">
+        <div id="progress">
+            <div id="progressBar"></div>
+        </div>
+
+        <div id="qna">
+            <div id="progress-info">1/10</div>
+            <img id="question-img" src="" alt="질문 이미지">
+            <h2 id="question">질문이 여기에 표시됩니다.</h2>
+            <div id="answer-box">
+                </div>
+        </div>
     </div>
 </body>
 </html>
@@ -31,7 +29,7 @@
     const main = document.getElementById('main');
     const qna = document.getElementById('qna');
     const progressBar = document.getElementById('progressBar');
-    const qNum = document.getElementById('question-num');
+    const progressInfo = document.getElementById('progress-info');
     const qImg = document.getElementById('question-img');
     const question = document.getElementById('question');
     const answerBox = document.getElementById('answer-box');
@@ -95,8 +93,10 @@
         const progress = ((qIdx + 1) / qnaList.length) * 100;
         progressBar.style.width = progress + '%';
 
+        // 진행 정보 업데이트
+        progressInfo.textContent = `${qIdx + 1}/${qnaList.length}`;
+
         // 질문 내용 업데이트
-        qNum.textContent = `Q${qIdx + 1}`;
         qImg.src = qnaList[qIdx].img;
         question.textContent = qnaList[qIdx].q;
         

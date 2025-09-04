@@ -1,0 +1,32 @@
+# 워크플로우의 이름
+name: Deploy to sijun-server
+
+# 언제 이 워크플로우를 실행할지 정의
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 코드가 푸시될 때만 실행
+
+# 실행될 작업(Job)들을 정의
+jobs:
+  deploy:
+    # 작업의 이름
+    name: Build and Deploy
+    
+    # 이 작업이 실행될 환경을 지정
+    # 'self-hosted' 러너에서 실행
+    runs-on: [self-hosted]
+
+    # 실제 실행될 단계(Step)들을 순서대로 정의
+    steps:
+      # 1. 레포지토리 코드 체크아웃
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. 정적 파일 배포
+      - name: Deploy Static Files
+        run: |
+          # rsync를 사용해 프로젝트 루트의 모든 내용을 Nginx 웹 루트로 동기화
+          # --delete 옵션은 원본에 없는 불필요한 파일을 서버에서 삭제
+          # 만약 public/ 이나 src/ 같은 하위 폴더에 파일이 있다면 './' 부분을 './public/' 등으로 변경하세요.
+          sudo rsync -av --delete ./soobo-mbti/ /var/www/soobo/

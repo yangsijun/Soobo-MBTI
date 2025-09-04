@@ -11,7 +11,7 @@ on:
 jobs:
   deploy:
     # 작업의 이름
-    name: Deploy and Set Permissions
+    name: Deploy
     
     # 이 작업이 실행될 환경을 지정
     runs-on: [self-hosted]
@@ -22,11 +22,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 파일 배포 및 권한 설정
-      - name: Deploy Files and Set Ownership
+      # 2. 파일 배포
+      - name: Deploy Files
         run: |
           # rsync를 사용해 프로젝트 루트의 모든 내용을 Nginx 웹 루트로 동기화
           sudo rsync -av --delete ./soobo-mbti/ /var/www/soobo/
-          
-          # 배포된 모든 파일의 소유권을 웹 서버(www-data)로 변경
-          sudo chown -R www-data:www-data /var/www/soobo

@@ -289,15 +289,17 @@ body {
     font-size: 1.2em;
     font-weight: bold;
     margin-bottom: 20px;
-    word-break: keep-all; /* 단어 단위로 줄바꿈 */
+    word-break: break-word; /* 단어를 끊어서 줄바꿈 허용 */
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     padding: 0 5px;
-    line-height: 1.4;
+    line-height: 1.5;
     white-space: normal;
     overflow: visible;
     text-overflow: clip;
     word-wrap: break-word;
+    max-width: 100%;
+    display: block;
 }
 
 /* 답변 버튼 컨테이너 */

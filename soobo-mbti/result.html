@@ -15,7 +15,7 @@
             <p id="result-desc">결과에 대한 설명이 여기에 표시됩니다.</p>
             <div class="button-container">
                 <button id="retry-btn" onclick="retryTest()">다시 테스트하기</button>
-                <button id="share-btn">결과 공유하기</button>
+                <button id="share-btn" onclick="shareResult()">결과 공유하기</button>
             </div>
         </main>
     </div>
@@ -114,6 +114,85 @@
         // '다시 검사하기' 버튼 클릭 시 index.html로 이동
         function retryTest() {
             window.location.href = 'index.html';
+        }
+
+        // 결과 공유하기 함수
+        function shareResult() {
+            const resultName = document.getElementById('result-name').textContent;
+            const resultDesc = document.getElementById('result-desc').textContent;
+            
+            // 공유할 텍스트 구성
+            const shareText = `🌙 수면 MBTI 결과 🌙\n\n${resultName}\n\n${resultDesc}\n\n나도 테스트해보세요! 👉 ${window.location.origin}`;
+            
+            // 클립보드에 복사
+            if (navigator.clipboard && window.isSecureContext) {
+                // 모던 브라우저에서 클립보드 API 사용
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showShareSuccess();
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(shareText);
+                });
+            } else {
+                // 구형 브라우저를 위한 fallback
+                fallbackCopyTextToClipboard(shareText);
+            }
+        }
+
+        // 구형 브라우저를 위한 클립보드 복사 함수
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showShareSuccess();
+                } else {
+                    showShareError();
+                }
+            } catch (err) {
+                showShareError();
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // 공유 성공 메시지 표시
+        function showShareSuccess() {
+            const shareBtn = document.getElementById('share-btn');
+            const originalText = shareBtn.textContent;
+            
+            shareBtn.textContent = '복사 완료! 📋';
+            shareBtn.style.background = 'rgba(76, 175, 80, 0.8)';
+            shareBtn.style.borderColor = 'rgba(76, 175, 80, 0.8)';
+            
+            setTimeout(() => {
+                shareBtn.textContent = originalText;
+                shareBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+                shareBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            }, 2000);
+        }
+
+        // 공유 실패 메시지 표시
+        function showShareError() {
+            const shareBtn = document.getElementById('share-btn');
+            const originalText = shareBtn.textContent;
+            
+            shareBtn.textContent = '복사 실패 😢';
+            shareBtn.style.background = 'rgba(244, 67, 54, 0.8)';
+            shareBtn.style.borderColor = 'rgba(244, 67, 54, 0.8)';
+            
+            setTimeout(() => {
+                shareBtn.textContent = originalText;
+                shareBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+                shareBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            }, 2000);
         }
     </script>
 </body>

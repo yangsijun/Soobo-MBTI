@@ -8,16 +8,17 @@
 </head>
 <body data-kakao-app-key="93298b5c87e46c48f2ba181afb1d27fd">
     <div class="mobile-container">
-        <h1>수면 MBTI</h1>
-        <p>설명</p>
+        <div class="hero-image">
+            <img src="images/kitten.gif" alt="굿나잇 MBTI" class="square-image">
+        </div>
+        <h1>굿나잇 MBTI</h1>
         <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-            Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            잠에 들 때까지 나의 성향은 어떨까?<br>1분만에 검사하고 꿀잠 팁까지 확인하기! 
         </p>
 
         <div>
-            <button id="share-btn">공유하기</button>
             <button id="start-btn" onclick="startTest()">테스트하기</button>
+            <button id="share-btn">공유하기</button>
         </div>
     </div>
 
@@ -27,10 +28,8 @@
         <div class="sheet-title">공유하기</div>
         <div class="share-grid">
             <button class="share-item" data-share="kakao">카카오톡</button>
-            <button class="share-item" data-share="facebook">페이스북</button>
-            <button class="share-item" data-share="twitter">트위터</button>
+            <button class="share-item" data-share="instagram">인스타그램</button>
             <button class="share-item" data-share="copy">링크 복사</button>
-            <button class="share-item" data-share="system">시스템 공유</button>
         </div>
         <button id="share-cancel" class="sheet-cancel">취소</button>
     </div>
@@ -94,17 +93,11 @@
             alert('시스템 공유를 사용할 수 없어 링크를 복사했어요.');
         }
 
-        function shareToFacebook() {
-            const { url } = getShareData();
-            const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-            openPopup(shareUrl);
-            closeSheet();
-        }
-
-        function shareToTwitter() {
+        function shareToInstagram() {
             const { url, text } = getShareData();
-            const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-            openPopup(shareUrl);
+            // 인스타그램은 직접 링크 공유가 제한적이므로 링크 복사로 대체
+            copyToClipboard();
+            alert('인스타그램 스토리에 링크를 복사했습니다. 스토리에 붙여넣기 해주세요!');
             closeSheet();
         }
 
@@ -197,19 +190,13 @@
                 case 'kakao':
                     shareToKakao();
                     break;
-                case 'facebook':
-                    shareToFacebook();
-                    break;
-                case 'twitter':
-                    shareToTwitter();
+                case 'instagram':
+                    shareToInstagram();
                     break;
                 case 'copy':
                     copyToClipboard();
                     alert('링크를 복사했어요. 친구에게 공유해보세요!');
                     closeSheet();
-                    break;
-                case 'system':
-                    shareToSystem();
                     break;
                 default:
                     break;

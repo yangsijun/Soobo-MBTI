@@ -27,11 +27,12 @@ jobs:
         run: |
           mkdir -p "$APPS_DIR" "$BACKEND_DIR" "$FRONTEND_DIR"
 
-      - name: Provision local MongoDB (if no MONGODB_URI secret)
+      - name: Provision local MongoDB (if no secret or USE_LOCAL_MONGO=true)
         env:
           MONGO_URI_SECRET: ${{ secrets.MONGODB_URI }}
+          USE_LOCAL_MONGO: ${{ vars.USE_LOCAL_MONGO }}
         run: |
-          if [ -z "$MONGO_URI_SECRET" ]; then
+          if [ "${USE_LOCAL_MONGO}" = "true" ] || [ -z "$MONGO_URI_SECRET" ]; then
             echo "No MONGODB_URI secret. Ensuring local MongoDB via Docker..."
             if ! command -v docker >/dev/null 2>&1; then
               echo "Docker is required on self-hosted runner." >&2

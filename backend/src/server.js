@@ -25,6 +25,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Proxy 경로(`/api`) 하에서도 헬스체크 가능하도록 추가
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 app.use('/api/sessions', sessionsRouter);
 
 const PORT = process.env.PORT || 4000;

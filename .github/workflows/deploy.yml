@@ -45,6 +45,19 @@ jobs:
         run: |
           rsync -a --delete backend/ "$BACKEND_DIR/"
 
+      - name: Write backend .env from secrets
+        run: |
+          BACKEND_ENV_FILE="$BACKEND_DIR/.env"
+          : "${PORT:=4000}"
+          CORS_ORIGINS_VALUE="${{ secrets.CORS_ORIGINS }}"
+          if [ -z "$CORS_ORIGINS_VALUE" ]; then CORS_ORIGINS_VALUE="https://soobo.sijun.dev"; fi
+          cat > "$BACKEND_ENV_FILE" <<EOF
+          NODE_ENV=production
+          PORT=$PORT
+          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          CORS_ORIGINS=$CORS_ORIGINS_VALUE
+          EOF
+
       - name: Install production deps in backend
         run: |
           cd "$BACKEND_DIR"
@@ -64,6 +77,20 @@ jobs:
             pm2 start src/server.js --name "$APP_NAME" --cwd "$BACKEND_DIR"
           fi
           pm2 save
+
+      - name: Health check backend
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4000/api/health >/dev/null 2>&1; then
+              echo "Backend healthy"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i)"
+            sleep 2
+          done
+          echo "Backend failed to become healthy"
+          pm2 logs --lines 200 || true
+          exit 1
 
       - name: Build frontend assets
         working-directory: soobo-mbti

@@ -5,12 +5,10 @@ services:
     build: ./backend
     container_name: soobo-mbti
     restart: unless-stopped
-    ports:
-      - "4000:4000"
     environment:
       - NODE_ENV=production
       - PORT=4000
-      - MONGODB_URI=mongodb://soobo_user:${MONGODB_PASSWORD}@mongo:27017/soobo-mbti?authSource=soobo-mbti
+      - MONGODB_URI=mongodb://soobo_user:${MONGODB_PASSWORD}@localhost:27017/soobo-mbti?authSource=soobo-mbti
       - MONGODB_USER=soobo_user
       - MONGODB_PASSWORD=${MONGODB_PASSWORD}
       - ALLOWED_ORIGINS=https://soobo.sijun.dev
@@ -18,37 +16,10 @@ services:
       - RATE_LIMIT_MAX_REQUESTS=100
     volumes:
       - ./logs:/app/logs
-    networks:
-      - soobo-network
-    depends_on:
-      - mongo
+    network_mode: "host"
     healthcheck:
       test: ["CMD", "node", "healthcheck.js"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-
-  mongo:
-    image: mongo:7.0
-    container_name: soobo-mbti-mongo
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
-      - MONGO_INITDB_DATABASE=soobo-mbti
-    volumes:
-      - mongo_data:/data/db
-      - ./mongo-init:/docker-entrypoint-initdb.d:ro
-    networks:
-      - soobo-network
-
-volumes:
-  mongo_data:
-    driver: local
-
-networks:
-  soobo-network:
-    driver: bridge

@@ -4,23 +4,21 @@ const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/soobo-mbti';
     
-    // MongoDB 연결 옵션
+    // MongoDB 연결 옵션 (deprecated 옵션 제거)
     const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     };
 
-    // 인증 정보가 있는 경우 추가
-    if (process.env.MONGODB_USER && process.env.MONGODB_PASSWORD) {
-      options.authSource = 'admin';
-      options.auth = {
-        username: process.env.MONGODB_USER,
-        password: process.env.MONGODB_PASSWORD
-      };
-    }
+    // 인증 정보가 있는 경우에만 추가 (현재는 인증 없이 시도)
+    // if (process.env.MONGODB_USER && process.env.MONGODB_PASSWORD) {
+    //   options.authSource = 'admin';
+    //   options.auth = {
+    //     username: process.env.MONGODB_USER,
+    //     password: process.env.MONGODB_PASSWORD
+    //   };
+    // }
 
     const conn = await mongoose.connect(mongoURI, options);
 

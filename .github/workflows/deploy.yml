@@ -1,52 +1,53 @@
-# 워크플로우의 이름
-name: Deploy Soobo MBTI
+# 안전한 배포 워크플로우
+name: Deploy Soobo MBTI (Safe)
 
-# 언제 이 워크플로우를 실행할지 정의
 on:
   push:
     branches:
-      - main  # main 브랜치에 코드가 푸시될 때만 실행
+      - main
 
-# 실행될 작업(Job)들을 정의
 jobs:
   deploy:
-    # 작업의 이름
     name: Deploy Frontend & Backend
-    
-    # 이 작업이 실행될 환경을 지정
     runs-on: [self-hosted]
 
-    # 실제 실행될 단계(Step)들을 순서대로 정의
     steps:
       # 1. 레포지토리 코드 체크아웃
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 프론트엔드 배포
+      # 2. 프론트엔드 배포 (기존 유지)
       - name: Deploy Frontend Files
         run: |
           # 프론트엔드 파일들을 Nginx 웹 루트로 동기화
           sudo rsync -av --delete ./soobo-mbti/ /home/runner/apps/soobo-mbti-frontend/
 
-      # 3. 백엔드 배포 준비
+      # 3. 백엔드 배포 준비 (권한 확인 후 실행)
       - name: Prepare Backend Deployment
         run: |
-          # 백엔드 디렉토리가 없으면 생성
-          sudo mkdir -p /home/runner/apps/soobo-mbti-backend
+          # 백엔드 디렉토리 생성 (권한 확인)
+          if [ ! -d "/home/runner/apps/soobo-mbti-backend" ]; then
+            mkdir -p /home/runner/apps/soobo-mbti-backend || sudo mkdir -p /home/runner/apps/soobo-mbti-backend
+          fi
           
           # 백엔드 파일들 복사
-          sudo rsync -av --delete ./backend/ /home/runner/apps/soobo-mbti-backend/
-          sudo rsync -av ./docker-compose.yml /home/runner/apps/soobo-mbti-backend/
-          sudo rsync -av ./mongo-init/ /home/runner/apps/soobo-mbti-backend/mongo-init/
+          cp -r ./backend/* /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
+          sudo cp -r ./backend/* /home/runner/apps/soobo-mbti-backend/
+          
+          cp ./docker-compose.yml /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
+          sudo cp ./docker-compose.yml /home/runner/apps/soobo-mbti-backend/
+          
+          cp -r ./mongo-init /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
+          sudo cp -r ./mongo-init /home/runner/apps/soobo-mbti-backend/
 
       # 4. 환경 변수 설정
       - name: Setup Environment Variables
         run: |
           cd /home/runner/apps/soobo-mbti-backend
           
-          # .env 파일 생성 (secrets에서 가져온 값들 사용)
-          sudo tee .env > /dev/null <<EOF
-          MONGODB_URI=mongodb://soobo_user:${{ secrets.MONGODB_PASSWORD }}@localhost:27017/soobo-mbti?authSource=admin
+          # .env 파일 생성
+          cat > .env <<EOF
+          MONGODB_URI=mongodb://soobo_user:${{ secrets.MONGODB_PASSWORD }}@localhost:27017/soobo-mbti?authSource=soobo-mbti
           MONGODB_USER=soobo_user
           MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}
           PORT=4000
@@ -56,43 +57,67 @@ jobs:
           RATE_LIMIT_MAX_REQUESTS=100
           EOF
           
-          # docker-compose를 위한 .env 파일도 생성
-          sudo tee .env.docker > /dev/null <<EOF
+          # docker-compose용 환경 변수
+          cat > .env.docker <<EOF
           MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}
           MONGO_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }}
           EOF
 
-      # 5. Docker 컨테이너 재시작
+      # 5. Docker 사용자 그룹 확인 및 배포
       - name: Deploy Backend with Docker
         run: |
           cd /home/runner/apps/soobo-mbti-backend
           
+          # Docker 그룹 확인
+          if groups $USER | grep -q '\bdocker\b'; then
+            echo "✅ User is in docker group"
+            DOCKER_CMD="docker"
+          else
+            echo "⚠️ User not in docker group, using sudo"
+            DOCKER_CMD="sudo docker"
+          fi
+          
           # 기존 컨테이너 중지 및 제거
-          sudo docker compose --env-file .env.docker down || true
+          $DOCKER_CMD compose --env-file .env.docker down || true
           
           # 이전 이미지 정리
-          sudo docker image prune -f
+          $DOCKER_CMD image prune -f || true
           
           # 새 컨테이너 빌드 및 시작
-          sudo docker compose --env-file .env.docker up -d --build
+          $DOCKER_CMD compose --env-file .env.docker up -d --build
           
           # 컨테이너 상태 확인
-          sleep 10
-          sudo docker compose --env-file .env.docker ps
-          sudo docker compose --env-file .env.docker logs soobo-mbti --tail=20
+          sleep 15
+          $DOCKER_CMD compose --env-file .env.docker ps
+          $DOCKER_CMD compose --env-file .env.docker logs soobo-mbti --tail=30
 
       # 6. 배포 상태 확인
       - name: Health Check
         run: |
+          echo "🔍 서버 헬스 체크 시작..."
+          
           # 서버가 정상적으로 시작될 때까지 대기
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -f http://localhost:4000/health > /dev/null 2>&1; then
-              echo "✅ Backend server is healthy"
+              echo "✅ Backend server is healthy!"
               break
             fi
-            echo "⏳ Waiting for server to start... ($i/30)"
-            sleep 2
+            echo "⏳ Waiting for server... ($i/60)"
+            sleep 3
           done
           
-          # 최종 상태 출력
-          curl -s http://localhost:4000/health | jq . || echo "❌ Health check failed"
+          # 최종 상태 확인
+          echo "📊 최종 헬스 체크 결과:"
+          curl -s http://localhost:4000/health || echo "❌ Health check failed"
+          
+          # API 기본 정보 확인
+          echo "📋 API 정보:"
+          curl -s http://localhost:4000/ || echo "❌ API info failed"
+
+      # 7. 배포 완료 알림
+      - name: Deployment Complete
+        run: |
+          echo "🎉 배포가 완료되었습니다!"
+          echo "🌐 Frontend: https://soobo.sijun.dev"
+          echo "🔗 API: https://soobo.sijun.dev/api"
+          echo "❤️ Health: https://soobo.sijun.dev/api/health"

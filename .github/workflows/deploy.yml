@@ -70,16 +70,18 @@ jobs:
           if ! command -v pm2 >/dev/null 2>&1; then
             npm i -g pm2
           fi
-          # Start or reload without sudo
-          if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-            pm2 reload "$APP_NAME" --update-env || pm2 restart "$APP_NAME"
-          else
-            pm2 start src/server.js --name "$APP_NAME" --cwd "$BACKEND_DIR"
-          fi
+          # Ensure using the correct Node interpreter
+          NODE_PATH="$(which node)"
+          echo "Using node: $NODE_PATH"
+          # Always restart cleanly to avoid stale processes/env
+          pm2 delete "$APP_NAME" || true
+          pm2 start src/server.js --name "$APP_NAME" --cwd "$BACKEND_DIR" --interpreter "$NODE_PATH" --time
           pm2 save
 
       - name: Health check backend
         run: |
+          echo "PM2 processes:" && pm2 ls || true
+          echo "Backend logs (tail):" && pm2 logs soobo-backend --lines 60 || true
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:4000/api/health >/dev/null 2>&1; then
               echo "Backend healthy"

@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "dev:local": "NODE_ENV=development ALLOWED_ORIGINS='http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080,file://' MONGODB_URI='mongodb://localhost:27017/soobo-mbti-dev' nodemon server.js",
+    "docker:dev": "docker-compose -f ../docker-compose.dev.yml up",
+    "docker:dev:build": "docker-compose -f ../docker-compose.dev.yml up --build",
+    "docker:dev:down": "docker-compose -f ../docker-compose.dev.yml down",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["mbti", "sleep", "personality", "test"],

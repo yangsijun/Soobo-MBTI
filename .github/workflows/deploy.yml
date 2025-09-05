@@ -31,6 +31,7 @@ jobs:
         env:
           MONGO_URI_SECRET: ${{ secrets.MONGODB_URI }}
           USE_LOCAL_MONGO: ${{ vars.USE_LOCAL_MONGO }}
+          LOCAL_MONGO_PORT: ${{ vars.LOCAL_MONGO_PORT }}
         run: |
           if [ "${USE_LOCAL_MONGO}" = "true" ] || [ -z "$MONGO_URI_SECRET" ]; then
             echo "No MONGODB_URI secret. Ensuring local MongoDB via Docker..."
@@ -43,6 +44,10 @@ jobs:
 
             # choose an available host port (27017 -> 27018 -> 27019)
             pick_port() {
+              if [ -n "${LOCAL_MONGO_PORT}" ]; then
+                echo ${LOCAL_MONGO_PORT}
+                return 0
+              fi
               for p in 27017 27018 27019; do
                 if ! (echo > /dev/tcp/127.0.0.1/$p) >/dev/null 2>&1; then
                   echo $p; return 0;

@@ -22,31 +22,36 @@ jobs:
           # 프론트엔드 파일들을 Nginx 웹 루트로 동기화
           sudo rsync -av --delete ./soobo-mbti/ /home/runner/apps/soobo-mbti-frontend/
 
-      # 3. 백엔드 배포 준비 (권한 확인 후 실행)
-      - name: Prepare Backend Deployment
-        run: |
-          # 백엔드 디렉토리 생성 (권한 확인)
-          if [ ! -d "/home/runner/apps/soobo-mbti-backend" ]; then
-            mkdir -p /home/runner/apps/soobo-mbti-backend || sudo mkdir -p /home/runner/apps/soobo-mbti-backend
-          fi
-          
-          # 백엔드 파일들 복사
-          cp -r ./backend/* /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
-          sudo cp -r ./backend/* /home/runner/apps/soobo-mbti-backend/
-          
-          cp ./docker-compose.yml /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
-          sudo cp ./docker-compose.yml /home/runner/apps/soobo-mbti-backend/
-          
-          cp -r ./mongo-init /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
-          sudo cp -r ./mongo-init /home/runner/apps/soobo-mbti-backend/
+             # 3. 백엔드 배포 준비 (권한 확인 후 실행)
+        - name: Prepare Backend Deployment
+          run: |
+            # 백엔드 디렉토리 생성 (권한 확인)
+            if [ ! -d "/home/runner/apps/soobo-mbti-backend" ]; then
+              mkdir -p /home/runner/apps/soobo-mbti-backend || sudo mkdir -p /home/runner/apps/soobo-mbti-backend
+            fi
+            
+            # 기존 파일들 정리
+            rm -rf /home/runner/apps/soobo-mbti-backend/* 2>/dev/null || \
+            sudo rm -rf /home/runner/apps/soobo-mbti-backend/* 2>/dev/null || true
+            
+            # 백엔드 디렉토리 자체를 복사 (Docker 빌드 컨텍스트 유지)
+            cp -r ./backend /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
+            sudo cp -r ./backend /home/runner/apps/soobo-mbti-backend/
+            
+            # Docker Compose와 MongoDB 초기화 스크립트 복사
+            cp ./docker-compose.yml /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
+            sudo cp ./docker-compose.yml /home/runner/apps/soobo-mbti-backend/
+            
+            cp -r ./mongo-init /home/runner/apps/soobo-mbti-backend/ 2>/dev/null || \
+            sudo cp -r ./mongo-init /home/runner/apps/soobo-mbti-backend/
 
       # 4. 환경 변수 설정
       - name: Setup Environment Variables
         run: |
           cd /home/runner/apps/soobo-mbti-backend
           
-          # .env 파일 생성
-          cat > .env <<EOF
+          # 백엔드 디렉토리 내에 .env 파일 생성
+          cat > backend/.env <<EOF
           MONGODB_URI=mongodb://soobo_user:${{ secrets.MONGODB_PASSWORD }}@localhost:27017/soobo-mbti?authSource=soobo-mbti
           MONGODB_USER=soobo_user
           MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}
@@ -57,7 +62,7 @@ jobs:
           RATE_LIMIT_MAX_REQUESTS=100
           EOF
           
-          # docker-compose용 환경 변수
+          # docker-compose용 환경 변수 (루트에 생성)
           cat > .env.docker <<EOF
           MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}
           MONGO_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }}

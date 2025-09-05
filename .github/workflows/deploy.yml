@@ -52,7 +52,7 @@ jobs:
           
           # 백엔드 디렉토리 내에 .env 파일 생성
           cat > backend/.env <<EOF
-          MONGODB_URI=mongodb://soobo_user:${{ secrets.MONGODB_PASSWORD }}@localhost:27017/soobo-mbti?authSource=soobo-mbti
+          MONGODB_URI=mongodb://localhost:27017/soobo-mbti
           MONGODB_USER=soobo_user
           MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}
           PORT=4000
@@ -61,6 +61,10 @@ jobs:
           RATE_LIMIT_WINDOW_MS=900000
           RATE_LIMIT_MAX_REQUESTS=100
           EOF
+          
+          echo "🔧 생성된 환경 변수 확인:"
+          echo "MongoDB URI: mongodb://localhost:27017/soobo-mbti"
+          echo "Port: 4000"
           
           # docker-compose용 환경 변수 (루트에 생성)
           cat > .env.docker <<EOF
@@ -82,8 +86,8 @@ jobs:
             DOCKER_CMD="sudo docker"
           fi
           
-          # 기존 컨테이너 중지 및 제거
-          $DOCKER_CMD compose --env-file .env.docker down || true
+          # 기존 컨테이너 중지 및 제거 (orphan 컨테이너도 제거)
+          $DOCKER_CMD compose --env-file .env.docker down --remove-orphans || true
           
           # 이전 이미지 정리
           $DOCKER_CMD image prune -f || true
@@ -91,10 +95,18 @@ jobs:
           # 새 컨테이너 빌드 및 시작
           $DOCKER_CMD compose --env-file .env.docker up -d --build
           
-          # 컨테이너 상태 확인
-          sleep 15
+          # 컨테이너 시작 대기 및 상태 확인
+          echo "⏳ 컨테이너 시작 대기 중..."
+          sleep 20
+          
+          echo "📊 컨테이너 상태:"
           $DOCKER_CMD compose --env-file .env.docker ps
-          $DOCKER_CMD compose --env-file .env.docker logs soobo-mbti --tail=30
+          
+          echo "📋 컨테이너 로그 (최근 50줄):"
+          $DOCKER_CMD compose --env-file .env.docker logs soobo-mbti-backend --tail=50 || true
+          
+          echo "🔍 컨테이너 세부 정보:"
+          $DOCKER_CMD inspect soobo-mbti --format='{{.State.Status}} - {{.State.Error}}' || true
 
       # 6. 배포 상태 확인
       - name: Health Check

@@ -22,9 +22,9 @@ jobs:
           # 프론트엔드 파일들을 Nginx 웹 루트로 동기화
           sudo rsync -av --delete ./soobo-mbti/ /home/runner/apps/soobo-mbti-frontend/
 
-             # 3. 백엔드 배포 준비 (권한 확인 후 실행)
-        - name: Prepare Backend Deployment
-          run: |
+      # 3. 백엔드 배포 준비 (권한 확인 후 실행)
+      - name: Prepare Backend Deployment
+        run: |
             # 백엔드 디렉토리 생성 (권한 확인)
             if [ ! -d "/home/runner/apps/soobo-mbti-backend" ]; then
               mkdir -p /home/runner/apps/soobo-mbti-backend || sudo mkdir -p /home/runner/apps/soobo-mbti-backend

@@ -36,10 +36,25 @@
 </body>
 </html>
 
+<script src="./api.js"></script>
 <script>
-    function startTest() {
-        window.location.href = 'question.html';
+    async function startTest() {
+        const startBtn = document.getElementById('start-btn');
+        startBtn.disabled = true;
+        startBtn.textContent = '세션 생성 중...';
+        try {
+            const { sessionId } = await ApiClient.startSession();
+            const params = new URLSearchParams({ sessionId });
+            window.location.href = `question.html?${params.toString()}`;
+        } catch (e) {
+            alert('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            startBtn.disabled = false;
+            startBtn.textContent = '테스트하기';
+        }
     }
+    
+    // 옵션: 배포 시 API 베이스 설정이 필요하면 아래 속성을 body에 추가하세요.
+    // <body data-api-base="https://your-api.example.com/api">
 </script>
 
 <script src="./share.js"></script>

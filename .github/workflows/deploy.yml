@@ -1,5 +1,5 @@
 # 워크플로우의 이름
-name: Deploy Static Site
+name: Deploy Frontend & Backend
 
 # 언제 이 워크플로우를 실행할지 정의
 on:
@@ -22,8 +22,46 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 파일 배포
-      - name: Deploy Files
+      # 2. 프론트엔드 정적 파일 배포
+      - name: Deploy Frontend (Static Files)
         run: |
-          # rsync를 사용해 프로젝트 루트의 모든 내용을 Nginx 웹 루트로 동기화
+          # 정적 파일을 Nginx 웹 루트로 동기화
           sudo rsync -av --delete ./soobo-mbti/ /var/www/soobo/
+
+      # 3. 백엔드 코드 동기화 및 의존성 설치
+      - name: Deploy Backend (Node.js API)
+        run: |
+          # 대상 디렉터리 준비
+          sudo mkdir -p /srv/soobo-backend
+          # .env와 node_modules는 서버에 남겨두고 코드만 동기화
+          sudo rsync -av --delete --exclude='.env' --exclude='node_modules' ./backend/ /srv/soobo-backend/
+          # 권한 정리 (self-hosted 러너 사용자로 설치 가능하도록)
+          sudo chown -R "$USER":"$USER" /srv/soobo-backend
+          cd /srv/soobo-backend
+          # 의존성 설치 (devDependencies 제외)
+          npm ci --omit=dev
+
+      # 3.5. GitHub Secrets를 사용해 .env 파일 작성
+      - name: Write .env from GitHub Secrets
+        run: |
+          printf "%s\n" \
+            "MONGODB_URI=${{ secrets.MONGODB_URI }}" \
+            "CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}" | sudo tee /srv/soobo-backend/.env >/dev/null
+          sudo chmod 600 /srv/soobo-backend/.env
+          sudo chown "$USER":"$USER" /srv/soobo-backend/.env
+
+      # 4. 백엔드 프로세스 재시작 (pm2 우선, 없으면 systemd 시도)
+      - name: Restart Backend Service
+        run: |
+          set -e
+          cd /srv/soobo-backend
+          if command -v pm2 >/dev/null 2>&1; then
+            echo "Using pm2 to reload/start service..."
+            pm2 describe soobo-backend >/dev/null 2>&1 && \
+              pm2 reload soobo-backend --update-env || \
+              pm2 start src/server.js --name soobo-backend
+            pm2 save
+          else
+            echo "pm2 not found. Trying systemd..."
+            sudo systemctl restart soobo-backend || true
+          fi

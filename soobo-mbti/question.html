@@ -24,6 +24,7 @@
 </html>
 
 
+    <script src="api.js"></script>
     <script src="sleep-mbti-calculator.js"></script>
     <script>
     // --- 기능 구현 부분 ---
@@ -38,6 +39,11 @@
     let currentQ = 0; // 현재 질문 번호
     const calculator = new SleepMBTICalculator(); // 새로운 계산기 인스턴스
     let qnaList = []; // JSON 데이터를 저장할 빈 배열
+    let sessionId = null; // 백엔드 세션 ID
+
+    // URL에서 세션 ID 추출
+    const urlParams = new URLSearchParams(window.location.search);
+    sessionId = urlParams.get('sessionId');
 
     // fetch를 사용해 JSON 파일 불러오기
     function loadQnA() {
@@ -55,6 +61,12 @@
         main.style.transform = 'translateY(0)';
         qna.style.display = 'block';
         
+        if (!sessionId) {
+            alert('세션 정보가 없어 처음 화면으로 돌아갑니다.');
+            window.location.href = 'index.html';
+            return;
+        }
+
         loadQnA().then(() => { // JSON 로딩이 완료된 후 검사 시작
             qna.style.display = 'block';
             goNext(currentQ);
@@ -62,9 +74,24 @@
     };
 
     // 답변 버튼 클릭 시 호출될 함수
+    const debouncedSave = ApiClient.debounce(async () => {
+        try {
+            const answers = Object.entries(calculator.answers).map(([qIndex, aIndex]) => ({
+                questionId: `q${Number(qIndex) + 1}`,
+                choiceId: String(aIndex),
+                value: aIndex,
+                answeredAt: new Date().toISOString()
+            }));
+            await ApiClient.saveAnswers(sessionId, answers);
+        } catch (e) {
+            // 저장 실패는 사용자 플로우를 막지 않음
+        }
+    }, 400);
+
     function selectAnswer(answerIndex) {
         // 선택한 답변을 계산기에 저장
         calculator.setAnswer(currentQ, answerIndex);
+        debouncedSave();
 
         currentQ++; // 다음 질문으로
         
@@ -77,18 +104,36 @@
     }
     
     // 최종 결과 계산 및 페이지 이동
-    function showResult() {
+    async function showResult() {
         const result = calculator.calculateFinalResult();
-        
-        // 결과 페이지로 결과 값을 쿼리스트링으로 넘겨주며 이동
+        try {
+            await ApiClient.completeSession(sessionId, {
+                resultType: result.type,
+                resultScores: {
+                    morning: result.morning,
+                    control: result.control,
+                    rhythm: result.rhythm,
+                    recovery: result.recovery
+                },
+                answers: Object.entries(calculator.answers).map(([qIndex, aIndex]) => ({
+                    questionId: `q${Number(qIndex) + 1}`,
+                    choiceId: String(aIndex),
+                    value: aIndex,
+                    answeredAt: new Date().toISOString()
+                }))
+            });
+        } catch (e) {
+            // 실패해도 결과 페이지 이동은 진행
+        }
+
         const params = new URLSearchParams({
             type: result.type,
             morning: result.morning,
             control: result.control,
             rhythm: result.rhythm,
-            recovery: result.recovery
+            recovery: result.recovery,
+            sessionId
         });
-        
         window.location.href = `result.html?${params.toString()}`;
     }
 

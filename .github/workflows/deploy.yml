@@ -27,6 +27,37 @@ jobs:
         run: |
           mkdir -p "$APPS_DIR" "$BACKEND_DIR" "$FRONTEND_DIR"
 
+      - name: Provision local MongoDB (if no MONGODB_URI secret)
+        env:
+          MONGO_URI_SECRET: ${{ secrets.MONGODB_URI }}
+        run: |
+          if [ -z "$MONGO_URI_SECRET" ]; then
+            echo "No MONGODB_URI secret. Ensuring local MongoDB via Docker..."
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "Docker is required on self-hosted runner." >&2
+              exit 1
+            fi
+            mkdir -p "$APPS_DIR/soobo-mongo"
+            if docker ps -a --format '{{.Names}}' | grep -q '^soobo-mongo$'; then
+              docker start soobo-mongo || true
+            else
+              docker run -d --name soobo-mongo \
+                -p 127.0.0.1:27017:27017 \
+                -v "$APPS_DIR/soobo-mongo:/data/db" \
+                --restart unless-stopped \
+                mongo:6 --bind_ip 127.0.0.1
+            fi
+            for i in {1..30}; do
+              (echo > /dev/tcp/127.0.0.1/27017) >/dev/null 2>&1 && break
+              echo "Waiting for MongoDB... ($i)"; sleep 1
+            done
+            echo "MONGODB_URI_EFFECTIVE=mongodb://127.0.0.1:27017/soobo" >> $GITHUB_ENV
+          else
+            echo "Using provided MONGODB_URI secret"
+            echo "::add-mask::$MONGO_URI_SECRET"
+            echo "MONGODB_URI_EFFECTIVE=$MONGO_URI_SECRET" >> $GITHUB_ENV
+          fi
+
       - name: Install backend deps
         working-directory: backend
         run: |
@@ -54,7 +85,7 @@ jobs:
           cat > "$BACKEND_ENV_FILE" <<EOF
           NODE_ENV=production
           PORT=$PORT
-          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          MONGODB_URI=${MONGODB_URI_EFFECTIVE}
           CORS_ORIGINS=$CORS_ORIGINS_VALUE
           EOF
 

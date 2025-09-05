@@ -52,7 +52,7 @@ jobs:
           
           # 백엔드 디렉토리 내에 .env 파일 생성
           cat > backend/.env <<EOF
-          MONGODB_URI=mongodb://localhost:27017/soobo-mbti
+          MONGODB_URI=mongodb://soobo_user:${{ secrets.MONGODB_PASSWORD }}@localhost:27017/soobo-mbti?authSource=soobo-mbti
           MONGODB_USER=soobo_user
           MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}
           PORT=4000

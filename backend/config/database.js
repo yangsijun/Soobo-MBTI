@@ -11,14 +11,14 @@ const connectDB = async () => {
       socketTimeoutMS: 45000,
     };
 
-    // 인증 정보가 있는 경우에만 추가 (현재는 인증 없이 시도)
-    // if (process.env.MONGODB_USER && process.env.MONGODB_PASSWORD) {
-    //   options.authSource = 'admin';
-    //   options.auth = {
-    //     username: process.env.MONGODB_USER,
-    //     password: process.env.MONGODB_PASSWORD
-    //   };
-    // }
+    // 인증 정보가 있는 경우 추가
+    if (process.env.MONGODB_USER && process.env.MONGODB_PASSWORD) {
+      options.authSource = 'soobo-mbti'; // authSource를 soobo-mbti로 변경
+      options.auth = {
+        username: process.env.MONGODB_USER,
+        password: process.env.MONGODB_PASSWORD
+      };
+    }
 
     const conn = await mongoose.connect(mongoURI, options);
 

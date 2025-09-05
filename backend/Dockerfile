@@ -14,14 +14,6 @@ RUN npm install --production --no-audit --no-fund && \
 # 소스 코드 복사
 COPY . .
 
-# 실행할 사용자 생성 (보안)
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-# 파일 권한 설정
-RUN chown -R nodejs:nodejs /app
-USER nodejs
-
 # 포트 노출
 EXPOSE 4000
 

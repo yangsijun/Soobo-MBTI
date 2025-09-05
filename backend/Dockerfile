@@ -1,5 +1,5 @@
-# Node.js 18 Alpine 이미지 사용 (가볍고 보안성 우수)
-FROM node:18-alpine
+# Node.js 18 이미지 사용 (안정성 우선)
+FROM node:18-slim
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -7,8 +7,9 @@ WORKDIR /app
 # 패키지 파일들 복사
 COPY package*.json ./
 
-# 의존성 설치 (프로덕션 모드)
-RUN npm ci --only=production && npm cache clean --force
+# 의존성 설치 (안전한 방법)
+RUN npm install --production --no-audit --no-fund && \
+    npm cache clean --force
 
 # 소스 코드 복사
 COPY . .

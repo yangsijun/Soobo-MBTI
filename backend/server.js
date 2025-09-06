@@ -62,7 +62,7 @@ app.use('/api/sessions', sessionsRouter);
 app.use('/api/data', dataAccessLimiter, dataRouter);
 
 // 세션 생성에만 더 엄격한 레이트 리미터 적용
-app.use('/api/sessions', sessionCreateLimiter);
+// app.use('/api/sessions', sessionCreateLimiter);
 
 // Health check 엔드포인트
 app.get('/health', (req, res) => {

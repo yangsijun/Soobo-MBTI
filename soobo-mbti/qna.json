@@ -123,7 +123,7 @@
       ]
     },
     {
-      "img": "images/q15.jpg",
+      "img": "images/q15.png",
       "a": [
         { "answer": "10대", "type": ["E"] },
         { "answer": "20대", "type": ["S"] },

@@ -108,7 +108,7 @@
                         content: {
                             title: title,
                             description: text,
-                            imageUrl: 'https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png',
+                            imageUrl: 'https://soobo.sijun.dev/images/kitten.gif',
                             link: { mobileWebUrl: url, webUrl: url }
                         },
                         buttons: [

@@ -43,10 +43,25 @@ GitHub 레포지토리의 Settings > Secrets and variables > Actions에서 다�
 
 ### 1. Nginx 설정
 
-`/etc/nginx/sites-available/soobo.sijun.dev` 파일에 다음 설정을 추가:
+**중요**: 프론트엔드와 백엔드가 같은 도메인에서 서비스되도록 설정하여 CORS 문제를 해결합니다.
+
+`/etc/nginx/sites-available/soobo.sijun.dev` 파일에 다음 설정을 추가 또는 업데이트:
 
 ```nginx
-# API 프록시 설정 추가
+# 정적 파일 서빙 (프론트엔드)
+location / {
+    root /var/www/soobo-mbti;
+    index index.html;
+    try_files $uri $uri/ /index.html;
+    
+    # 캐시 설정
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+
+# API 프록시 설정 - 백엔드를 /api 경로로 프록시
 location /api/ {
     proxy_pass http://localhost:4000/api/;
     proxy_http_version 1.1;
@@ -58,17 +73,27 @@ location /api/ {
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_cache_bypass $http_upgrade;
     
-    # CORS 헤더 (백엔드에서도 처리하지만 이중 보안)
-    add_header 'Access-Control-Allow-Origin' 'https://soobo.sijun.dev' always;
-    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-    add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With' always;
-    
     # 타임아웃 설정
     proxy_connect_timeout 60s;
     proxy_send_timeout 60s;
     proxy_read_timeout 60s;
 }
+
+# Health check 엔드포인트
+location /health {
+    proxy_pass http://localhost:4000/health;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
 ```
+
+> **새로운 자동 API URL 감지 기능**: 이제 프론트엔드가 자동으로 환경을 감지하여 올바른 API URL을 사용합니다:
+> - 개발환경 (localhost): `http://localhost:4000/api`
+> - 운영환경 (soobo.sijun.dev): `https://soobo.sijun.dev/api`
+> 
+> 완전한 설정 예시는 `nginx.conf.example` 파일을 참고하세요.
 
 설정 후 Nginx 재시작:
 ```bash

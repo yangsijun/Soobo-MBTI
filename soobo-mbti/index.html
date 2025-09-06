@@ -53,8 +53,13 @@
         }
     }
     
-    // 옵션: 배포 시 API 베이스 설정이 필요하면 아래 속성을 body에 추가하세요.
-    // <body data-api-base="https://your-api.example.com/api">
+    // API 베이스 URL 자동 감지됨. 현재 설정 확인:
+    console.log('🌐 API Base URL:', ApiClient.API_BASE);
+    console.log('🏠 Current Host:', window.location.hostname);
+    console.log('🔒 Protocol:', window.location.protocol);
+    
+    // 수동 설정이 필요한 경우 body에 data-api-base 속성 추가:
+    // <body data-api-base="https://your-custom-api.example.com/api">
 </script>
 
 <script src="./share.js"></script>

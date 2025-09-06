@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API URL 테스트</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .success { background-color: #d4edda; border-color: #28a745; }
+        .error { background-color: #f8d7da; border-color: #dc3545; }
+        .info { background-color: #d1ecf1; border-color: #17a2b8; }
+        .code { 
+            background-color: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 3px; 
+            font-family: monospace; 
+            white-space: pre-wrap;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>🧪 API URL 자동 감지 테스트</h1>
+    
+    <div class="info test-result">
+        <strong>현재 환경 정보:</strong>
+        <div class="code" id="env-info"></div>
+    </div>
+
+    <div class="info test-result">
+        <strong>감지된 API Base URL:</strong>
+        <div class="code" id="api-url"></div>
+    </div>
+
+    <div>
+        <button onclick="testHealthCheck()">Health Check 테스트</button>
+        <button onclick="testSessionCreate()">세션 생성 테스트</button>
+        <button onclick="clearResults()">결과 지우기</button>
+    </div>
+
+    <div id="test-results"></div>
+
+    <script src="api.js"></script>
+    <script>
+        // 환경 정보 표시
+        document.getElementById('env-info').textContent = [
+            `호스트: ${window.location.hostname}`,
+            `프로토콜: ${window.location.protocol}`,
+            `포트: ${window.location.port || '기본포트'}`,
+            `전체 URL: ${window.location.href}`
+        ].join('\n');
+
+        // API URL 표시
+        document.getElementById('api-url').textContent = ApiClient.API_BASE;
+
+        function addResult(type, title, content) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = `
+                <strong>${title}</strong>
+                <div class="code">${content}</div>
+            `;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testHealthCheck() {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '테스트 중...';
+
+            try {
+                const healthUrl = ApiClient.API_BASE.replace('/api', '/health');
+                const response = await fetch(healthUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('success', '✅ Health Check 성공', 
+                        `URL: ${healthUrl}\n응답: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    addResult('error', '❌ Health Check 실패', 
+                        `URL: ${healthUrl}\n상태: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                addResult('error', '❌ Health Check 오류', 
+                    `URL: ${healthUrl}\n오류: ${error.message}`);
+            }
+
+            button.disabled = false;
+            button.textContent = 'Health Check 테스트';
+        }
+
+        async function testSessionCreate() {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '테스트 중...';
+
+            try {
+                const result = await ApiClient.startSession();
+                addResult('success', '✅ 세션 생성 성공', 
+                    `API URL: ${ApiClient.API_BASE}/sessions\n응답: ${JSON.stringify(result, null, 2)}`);
+            } catch (error) {
+                addResult('error', '❌ 세션 생성 실패', 
+                    `API URL: ${ApiClient.API_BASE}/sessions\n오류: ${error.message}`);
+            }
+
+            button.disabled = false;
+            button.textContent = '세션 생성 테스트';
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+
+        // 페이지 로드 시 자동으로 환경 정보 로깅
+        console.group('🌐 API URL 자동 감지 정보');
+        console.log('현재 호스트:', window.location.hostname);
+        console.log('프로토콜:', window.location.protocol);
+        console.log('감지된 API Base URL:', ApiClient.API_BASE);
+        console.groupEnd();
+    </script>
+</body>
+</html>

@@ -6,56 +6,92 @@
         const bodyAttrBase = (typeof document !== 'undefined' && document.body && document.body.getAttribute('data-api-base')) || '';
         const globalBase = (typeof window !== 'undefined' && window.API_BASE) || '';
         
-        if (bodyAttrBase) return bodyAttrBase;
-        if (globalBase) return globalBase;
+        if (bodyAttrBase) {
+            console.log('🔧 API URL - 수동 설정 (data-api-base):', bodyAttrBase);
+            return bodyAttrBase;
+        }
+        if (globalBase) {
+            console.log('🔧 API URL - 수동 설정 (window.API_BASE):', globalBase);
+            return globalBase;
+        }
         
         // 2. 현재 호스트 기반 자동 감지
         if (typeof window !== 'undefined' && window.location) {
             const hostname = window.location.hostname;
             const protocol = window.location.protocol;
+            const port = window.location.port;
+            
+            console.log('🌍 현재 환경:', { hostname, protocol, port, href: window.location.href });
             
             // 로컬 개발 환경
             if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
-                return 'http://localhost:4000/api';
+                const apiUrl = 'http://localhost:4000/api';
+                console.log('🏠 개발 환경 감지:', apiUrl);
+                return apiUrl;
             }
             
             // 파일 프로토콜 (로컬 파일 열기)
             if (protocol === 'file:') {
-                return 'http://localhost:4000/api';
+                const apiUrl = 'http://localhost:4000/api';
+                console.log('📁 파일 프로토콜 감지:', apiUrl);
+                return apiUrl;
             }
             
             // 운영 환경 (soobo.sijun.dev) - 역프록시 환경에서는 포트 명시 불필요
             if (hostname === 'soobo.sijun.dev') {
-                return 'https://soobo.sijun.dev/api';
+                const apiUrl = 'https://soobo.sijun.dev/api';
+                console.log('🚀 운영 환경 감지 (soobo.sijun.dev):', apiUrl);
+                return apiUrl;
             }
             
-            // 기타 도메인 (HTTPS 환경) - 프로덕션 환경 가정
+            // 기타 HTTPS 환경 - 프로덕션 환경 가정
             if (protocol === 'https:') {
-                return `https://${hostname}/api`;
+                const apiUrl = `https://${hostname}/api`;
+                console.log('🔒 HTTPS 운영 환경 감지:', apiUrl);
+                return apiUrl;
             }
             
-            // 기타 도메인 (HTTP 환경) - 개발 환경 가정
-            return `http://${hostname}:4000/api`;
+            // 기타 HTTP 환경 - 개발 환경 가정  
+            const apiUrl = `http://${hostname}:4000/api`;
+            console.log('🔓 HTTP 개발 환경 감지:', apiUrl);
+            return apiUrl;
         }
         
         // 3. 폴백 (Node.js 환경 등)
-        return 'http://localhost:4000/api';
+        const fallbackUrl = 'http://localhost:4000/api';
+        console.log('⚠️ 폴백 URL 사용:', fallbackUrl);
+        return fallbackUrl;
     }
     
     const API_BASE = getApiBaseUrl();
 
     async function request(path, options = {}) {
         const url = `${API_BASE}${path}`;
+        console.log('🌐 API 요청:', { url, method: options.method || 'GET' });
+        
         const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
         const init = Object.assign({}, options, { headers });
-        const res = await fetch(url, init);
-        if (!res.ok) {
-            let errText = '';
-            try { errText = await res.text(); } catch (e) {}
-            throw new Error(`Request failed ${res.status}: ${errText}`);
+        
+        try {
+            const res = await fetch(url, init);
+            console.log('📡 API 응답:', { url, status: res.status, ok: res.ok });
+            
+            if (!res.ok) {
+                let errText = '';
+                try { errText = await res.text(); } catch (e) {}
+                const error = `Request failed ${res.status}: ${errText}`;
+                console.error('❌ API 오류:', error);
+                throw new Error(error);
+            }
+            
+            const text = await res.text();
+            const result = text ? JSON.parse(text) : {};
+            console.log('✅ API 성공:', { url, result });
+            return result;
+        } catch (error) {
+            console.error('💥 API 예외:', { url, error: error.message });
+            throw error;
         }
-        const text = await res.text();
-        try { return text ? JSON.parse(text) : {}; } catch (e) { return {}; }
     }
 
     async function startSession() {

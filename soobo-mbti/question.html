@@ -73,25 +73,9 @@
         });
     };
 
-    // 답변 버튼 클릭 시 호출될 함수
-    const debouncedSave = ApiClient.debounce(async () => {
-        try {
-            const answers = Object.entries(calculator.answers).map(([qIndex, aIndex]) => ({
-                questionId: `q${Number(qIndex) + 1}`,
-                choiceId: String(aIndex),
-                value: aIndex,
-                answeredAt: new Date().toISOString()
-            }));
-            await ApiClient.saveAnswers(sessionId, answers);
-        } catch (e) {
-            // 저장 실패는 사용자 플로우를 막지 않음
-        }
-    }, 400);
-
     function selectAnswer(answerIndex) {
         // 선택한 답변을 계산기에 저장
         calculator.setAnswer(currentQ, answerIndex);
-        debouncedSave();
 
         currentQ++; // 다음 질문으로
         
@@ -106,7 +90,20 @@
     // 최종 결과 계산 및 페이지 이동
     async function showResult() {
         const result = calculator.calculateFinalResult();
+        
+        // 모든 답변을 한 번에 저장
+        const answers = Object.entries(calculator.answers).map(([qIndex, aIndex]) => ({
+            questionId: `q${Number(qIndex) + 1}`,
+            choiceId: String(aIndex),
+            value: aIndex,
+            answeredAt: new Date().toISOString()
+        }));
+
         try {
+            // 1. 답변 일괄 저장
+            await ApiClient.saveAnswers(sessionId, answers);
+            
+            // 2. 세션 완료 처리
             await ApiClient.completeSession(sessionId, {
                 resultType: result.type,
                 resultScores: {
@@ -115,14 +112,10 @@
                     rhythm: result.rhythm,
                     recovery: result.recovery
                 },
-                answers: Object.entries(calculator.answers).map(([qIndex, aIndex]) => ({
-                    questionId: `q${Number(qIndex) + 1}`,
-                    choiceId: String(aIndex),
-                    value: aIndex,
-                    answeredAt: new Date().toISOString()
-                }))
+                answers: answers
             });
         } catch (e) {
+            console.error('답변 저장 또는 세션 완료 실패:', e);
             // 실패해도 결과 페이지 이동은 진행
         }
 

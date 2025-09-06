@@ -37,7 +37,30 @@
                 // HTML 요소에 결과 데이터 채우기
                 document.getElementById('result-type').textContent = `당신의 수면 유형은`;
                 document.getElementById('result-name').textContent = type;
-                document.getElementById('result-img').src = 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1974';
+                
+                // 수면 MBTI 타입별 이미지 매핑
+                const typeImageMap = {
+                    '🌞 아침 햇살 장인 (ENTJ)': 'images/1.png',
+                    '⏰ 졸린 알람 파이터 (ISFJ)': 'images/2.png',
+                    '🛫 출근 모드 마스터 (ENTJ)': 'images/3.png',
+                    '🥱 억지 부지런러 (ISFJ)': 'images/4.png',
+                    '🐦 아침 산책러 (ISFP)': 'images/5.png',
+                    '😵 아침 비틀이 (ENFP)': 'images/6.png',
+                    '🌍 글로벌 얼리버드 (ESFP)': 'images/7.png',
+                    '🙃 아침 좀비형 (ENFP)': 'images/8.png',
+                    '🌙 달빛 워커홀릭 (ESTP)': 'images/9.png',
+                    '💼 야근형 부스터 (ESTP)': 'images/10.png',
+                    '🛰️ 밤의 글로벌러 (ENTJ)': 'images/11.png',
+                    '😵‍💫 늦밤 생존러 (ISFJ)': 'images/12.png',
+                    '🦉 새벽 감성러 (INFJ)': 'images/13.png',
+                    '🥴 새벽 후회러 (ENFP)': 'images/14.png',
+                    '🎨 밤의 크리에이터 (INTP)': 'images/15.png',
+                    '🔥 새벽 방황러 (ENFP)': 'images/16.png'
+                };
+                
+                // 해당 타입의 이미지 설정
+                const imagePath = typeImageMap[type] || 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1974';
+                document.getElementById('result-img').src = imagePath;
                 document.getElementById('result-img').alt = type;
                 
                 // 상세 설명 생성

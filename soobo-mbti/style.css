@@ -384,11 +384,14 @@ body {
 }
 
 #result-img {
-    width: 100%;
-    max-width: 250px;
-    height: auto;
-    border-radius: 15px;
-    margin: 20px 0;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    margin: 20px auto;
+    object-fit: cover;
+    display: block;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    border: 4px solid rgba(255, 255, 255, 0.3);
 }
 
 #result-desc {

@@ -210,6 +210,95 @@ router.get('/results/:resultType', async (req, res) => {
   }
 });
 
+// 모든 세션의 응답 내용 조회 (상세 정보 포함)
+router.get('/sessions/detailed', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // 최대 100개로 제한
+    const skip = (page - 1) * limit;
+    
+    const filter = {};
+    
+    // 완료 상태 필터
+    if (req.query.completed === 'true') {
+      filter.isCompleted = true;
+    } else if (req.query.completed === 'false') {
+      filter.isCompleted = false;
+    }
+    
+    // 결과 타입 필터
+    if (req.query.resultType) {
+      filter.resultType = req.query.resultType;
+    }
+    
+    // 날짜 범위 필터
+    if (req.query.startDate || req.query.endDate) {
+      filter.createdAt = {};
+      if (req.query.startDate) {
+        filter.createdAt.$gte = new Date(req.query.startDate);
+      }
+      if (req.query.endDate) {
+        const endDate = new Date(req.query.endDate);
+        endDate.setHours(23, 59, 59, 999); // 해당 날짜 끝까지
+        filter.createdAt.$lte = endDate;
+      }
+    }
+
+    // 모든 세션 정보와 응답 내용을 포함하여 조회
+    const sessions = await Session.find(filter)
+      .select('sessionId isCompleted resultType resultScores createdAt completedAt updatedAt answers')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Session.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
+
+    // 응답 내용을 포함한 상세 정보 반환
+    const sessionsWithDetails = sessions.map(session => ({
+      sessionId: session.sessionId,
+      isCompleted: session.isCompleted,
+      resultType: session.resultType,
+      resultScores: session.resultScores,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+      completedAt: session.completedAt,
+      totalAnswers: session.answers ? session.answers.length : 0,
+      answers: session.answers || [], // 응답 내용 전체 포함
+      // 응답 시간 계산 (분 단위)
+      responseTimeMinutes: session.completedAt && session.createdAt 
+        ? Math.round((session.completedAt - session.createdAt) / (1000 * 60))
+        : null
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        sessions: sessionsWithDetails,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        },
+        summary: {
+          totalSessions: total,
+          completedSessions: sessionsWithDetails.filter(s => s.isCompleted).length,
+          incompleteSessions: sessionsWithDetails.filter(s => !s.isCompleted).length
+        }
+      }
+    });
+  } catch (error) {
+    console.error('상세 세션 목록 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '상세 세션 목록 조회에 실패했습니다.'
+    });
+  }
+});
+
 // 답변 분석 데이터 조회
 router.get('/answers/analysis', async (req, res) => {
   try {
